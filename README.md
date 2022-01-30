@@ -9,3 +9,13 @@ El paquete **datapack** ofrece una serie de clases y funciones que pueden ser ut
 - **plots.R:** Incluye las funciones que permiten representar gráficamente algunas de las métricas disponibles.
 
 Para más información, el fichero **Tutorial.html** en el directorio *doc* ofrece una guía rápida para iniciarse en las posibilidades que ofrece este paquete.
+
+# REQUERIMIENTOS
+
+Los gráficos disponibles en el paquete **datapack** hacen uso de las librerías **ggplot2** y **reshape2**.
+
+# INSTALACIÓN
+
+Si se dispone del paquete **devtools**, el paquete **datapack** puede ser instalado fácilmente mediante el siguiente comando:
+
+`devtools::install_github("XB-Repositories/R-datapack")`
