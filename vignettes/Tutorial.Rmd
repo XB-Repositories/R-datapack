@@ -1,0 +1,216 @@
+---
+title: "Paquete datapack: Guía rápida"
+author: "Xabier Benavides"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Paquete datapack: Guía rápida}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width=6,
+  fig.height=4
+)
+```
+
+En este tutorial introductorio se explican las principales funcionalidades del paquete **datapack**. Esta librería incluye funciones que permiten trabajar con conjuntos de datos numéricos, lógicos, categóricos o mixtos. La librería utiliza un enfoque orientado a objetos, por lo que la gestión del conjunto de datos se realiza a través de la clase S4 *Dataset*.
+
+```{r}
+library(datapack)
+```
+
+## Inicialización y gestión del conjunto de datos
+
+A lo largo de este documento trabajaremos con el conjunto de datos de ejemplo *fruits.csv*, el cuál es un conjunto de datos de juguete que incluye información sobre las remesas de fruta disponibles en una frutería. Este conjunto de datos está compuesto por los siguientes atributos.
+
+- **Code:** Código de la fruta.
+- **Fruit:** Tipo de fruta.
+- **Quantity:** Cantidad de unidades.
+- **Weight:** Peso medio.
+- **Color:** Color.
+- **Expensive:** Si la remesa es cara o no (según el criterio del vendedor).
+
+La variable clase de este conjunto de datos (es decir, la variable que se busca predecir) es la variable *Expensive*. Teniendo esto en cuenta, inicializamos nuestro conjunto de datos a partir del fichero *fruits.csv* mediante la función *from_csv*. El nombre de la variable clase se indica a través del parámetro *c*. Los atributos de tipo carácter que tengan menos posibles valores que los indicados mediante el parámetro *cat* (en este caso, 6) serán considerados de tipo *factor*.
+
+```{r}
+path <- system.file("data", package="datapack")
+MyDataset <- from_csv(paste(path,"/fruits.csv",sep=""),cat=6,c="Expensive")
+```
+
+La función *from_csv* no es la única forma de inicializar un objeto *Dataset*. Otra posible opción es pasar un dataframe a la función constructora de la clase que incluya la información del conjunto de datos, tal y como se muestra a continuación.
+
+```{r}
+t <- read.table(paste(path,"/fruits.csv",sep=""),sep=",",header=TRUE)
+MyDataset2 <- dataset(t,c="Expensive")
+```
+
+Una vez inicializado nuestro conjunto de datos, podemos visualizar su contenido. Para ello, utilizamos la función *print_dataset*.
+
+```{r}
+print_dataset(MyDataset)
+```
+
+Como se puede observar, los contenidos del conjunto de datos se imprimen en formato tabla. Además, también se indica el nombre de la variable clase. Si bien este tipo de visualización es muy similar a la que podemos obtener mediante dataframes, cabe destacar que la estructura interna de la clase *Dataset* NO es un dataframe, sino una lista donde cada entrada corresponde a un atributo. En caso de querer obtener un dataframe equivalente, podemos conseguirlo mediante la función *to_dataframe*.
+
+```{r}
+t <- to_dataframe(MyDataset)
+print(t)
+class(t)
+```
+
+Además de la visualización global del conjunto de datos, el paquete *datapack* también ofrece la opción de consultar la información de cada uno de los atributos por separado. Para ello, los atributos individuales se pueden obtener mediante la función *get_attribute*. Después, usamos la función *print_data* para imprimir su información.
+
+```{r}
+print("Code:"); print_data(get_attribute(MyDataset,"Code"))
+print("Fruit:"); print_data(get_attribute(MyDataset,"Fruit"))
+print("Quantity:"); print_data(get_attribute(MyDataset,"Quantity"))
+print("Weight:"); print_data(get_attribute(MyDataset,"Weight"))
+print("Color:"); print_data(get_attribute(MyDataset,"Color"))
+print("Expensive:"); print_data(get_attribute(MyDataset,"Expensive"))
+```
+
+Como se puede observar, las variables de nuestro conjunto de datos pueden ser de cuatro tipos distintos: tipo numérico (o entero), tipo carácter, tipo lógico y tipo factor.
+
+Una vez creado el conjunto de datos, podemos añadir nuevos atributos siempre que queramos. Como ejemplo, añadimos un atributo tipo factor llamado *Shop* que nos indica en qué tienda está disponible cada una de las remesas de frutas. Sus posibles valores son *Tienda Pepe* y *Tienda Marlo*. Para crear este atributo, primero hay que añadirlo como variable tipo string mediante la función *add_attribute*, y después utilizar la función *to_factor* para convertirlo en un atributo de tipo factor. La colección de valores admitidos se indica mediante el parámetro *levels*.
+
+```{r}
+MyDataset <- add_attribute(MyDataset,"Shop",c("Tienda Marlo","Tienda Marlo","Tienda Pepe","Tienda Pepe","Tienda Marlo","Tienda Marlo","Tienda Marlo","Tienda Pepe","Tienda Marlo","Tienda Marlo"))
+MyDataset <- to_factor(MyDataset,"Shop",levels=c("Tienda Pepe","Tienda Marlo"))
+print_data(get_attribute(MyDataset,"Shop"))
+```
+
+Al igual que podemos añadir atributos, también podemos eliminar los ya existentes mediante la función *remove_attribute*. Una vez hayamos terminado de trabajar con nuestro conjunto de datos, la función *to_csv* nos permite guardar todos los cambios realizados en un fichero *.csv*.
+
+```{r}
+to_csv(MyDataset,paste(path,"/fruits_new.csv",sep=""),header=TRUE,sep=";")
+```
+
+## Métricas para la exploración de datos
+
+Además de las funcionalidades para la gestión del conjunto de datos, la clase *Dataset* ofrece una colección de métricas univariadas y bivariadas que pueden ser muy útiles a la hora de realizar un análisis exploratorio. Dichas métricas pueden calcularse para un solo atributo o para todos al mismo tiempo.
+
+### Métricas univariadas
+
+El paquete *datapack* dispone de métricas univariadas tanto para atributos numéricos como no numéricos. En el caso de las variables numéricas, podemos calcular la media, la mediana y la varianza de los datos. Esto se puede realizar mediante las funciones *mean1*, *median1* y *variance1* en el caso de un único atributo, y mediante las funciones *mean_att*, *median_att* y *variance_att* en el caso del conjunto de datos entero.
+
+```{r}
+print("Mean of Weight:"); print(mean1(MyDataset,"Weight"))
+print("Median of Weight:"); print(median1(MyDataset,"Weight"))
+print("Variance of Weight:"); print(variance1(MyDataset,"Weight"))
+print("Mean of all the numerical attributes:"); print(mean_att(MyDataset))
+print("Median of all the numerical attributes:"); print(median_att(MyDataset))
+print("Variance of all the numerical attributes:"); print(variance_att(MyDataset))
+```
+
+Como se puede observar, las funciones que calculan las métricas para el conjunto de datos completo devuelven una lista con los resultados correspondientes para cada atributo. En caso de que una métrica no pueda aplicarse a un atributo concreto (por ejemplo, la media a una variable tipo carácter), se devuelve el valor **nan**.
+
+Pasando ahora a las variables no numéricas (carácter, factor...), las métricas univariadas disponibles son la moda y la entropía. Dichas métricas se pueden calcular a través de las funciones *mode1* y *entropy1* en el caso de un único atributo, y a través las funciones *mode_att* y *entropy_att* en el caso del conjunto de datos entero.
+
+```{r}
+print("Mode of Color:"); print(mode1(MyDataset,"Color"))
+print("Entropy of Color:"); print(entropy1(MyDataset,"Color"))
+print("Mode of all the non-numerical attributes:"); print(mode_att(MyDataset))
+print("Entropy of all the non-numerical attributes:"); print(entropy_att(MyDataset))
+```
+
+### Métricas bivariadas
+
+Además de las métricas univariadas, el paquete *datapack* también incluye una pequeña colección de métricas bivariadas que sirven para analizar la relación entre pares de variables. Por ejemplo, dadas dos variables numéricas, la función *correlation1* permite calcular la correlación entre las mismas. El coeficiente de correlación a utilizar puede ser especificado a través del parámetro *method*, donde las opciones disponibles son Pearson, Spearman y Kendall. En caso de querer calcular las correlaciones entre todos los pares de variables numéricas, la matriz de correlaciones completa puede ser calculada a través de la función *correlation_att*.
+
+```{r}
+print("Pearson correlation between Weight and Quantity:"); print(correlation1(MyDataset,"Weight","Quantity",method="pearson"))
+print("Spearman correlation between Weight and Quantity:"); print(correlation1(MyDataset,"Weight","Quantity",method="spearman"))
+print("Kendall correlation between Weight and Quantity:"); print(correlation1(MyDataset,"Weight","Quantity",method="kendall"))
+print("Pearson correlation matrix:"); print(correlation_att(MyDataset,method="pearson"))
+```
+
+Para poder comparar mejor las correlaciones entre variables, tenemos la opción de visualizar la matriz de correlaciones en forma de mapa de calor a través de la función *plot_cor*. Todas las gráficas que ofrece el paquete *datapack* están generadas mediante la librería *ggplot2*.
+
+```{r}
+plot_cor(MyDataset,method="pearson")
+```
+
+En el caso de las variables no numéricas, la métrica bivariada de interrelación que está disponible en este paquete es la información mutua normalizada ($NMI$). Esta métrica se calcula de la siguiente forma:
+
+$NMI(X;Y) = \frac{2I(X;Y)}{H(X)+H(Y)}$
+
+donde $I$ es la información mutua entre variables y $H$ es la entropía. La $NMI$ puede calcularse para un par de atributos (*norm_mutual_info1*) o para el conjunto de datos entero (*norm_mutual_info_att*).
+
+```{r}
+print("NMI Fruit and Color:"); print(norm_mutual_info1(MyDataset,"Fruit","Color"))
+print("NMI matrix:"); print(norm_mutual_info_att(MyDataset))
+```
+
+Al igual que en el caso de la correlación, la matriz de informaciones mutuas se puede visualizar en forma de mapa de calor mediante la función *plot_norm_mutual_info*.
+
+```{r}
+plot_norm_mutual_info(MyDataset)
+```
+
+Además del cálculo de interrelaciones entre pares de atributos, otra métrica muy útil que se nos proporciona en el paquete *datapack* es el cálculo del área bajo la curva ROC (AUC). Dado un atributo numérico y una clase lógica, el area bajo la curva ROC se calcula a partir de los resultados obtenidos utilizando el atributo numérico para predecir el valor de la clase. Es decir, lo que se hace es comprobar lo qué ocurriría si considerásemos todos los valores de la variable numérica como puntos de corte para decidir si la clase es TRUE (por encima del punto de corte) o FALSE (por debajo del punto de corte). Cuanto mayor el área bajo la curva ROC, mayor el potencial de la variable numérica a la hora de predecir el valor de la clase.
+
+El cálculo del área bajo la curva ROC se puede realizar mediante la función *roc_auc1*. Si lo que queremos es obtener el AUC para todas las variables numéricas, podemos utilizar la función *roc_auc_att*. Como la clase ya ha sido especificada durante la inicialización del conjunto de datos, no es necesario volver a indicarla en este punto.
+
+```{r}
+print("AUC for the Weight (Class: Expensive):"); print(roc_auc1(MyDataset,"Weight"))
+print("AUC for all the numerical attributes (Class: Expensive):"); print(roc_auc_att(MyDataset))
+```
+
+Para una mejor visualización de los resultados, la función *plot_roc* nos ofrece la posibilidad de representar gráficamente la curva ROC de una variable concreta. El valor de AUC correspondiente se indica en la esquina inferior derecha.
+
+```{r}
+plot_roc(MyDataset,"Weight")
+```
+
+## Funciones para el preproceso de atributos numéricos
+
+Otra de las opciones que más puede interesar a la hora de trabajar con un conjunto de datos es el preproceso de las variables numéricas. En este paquete se ofrecen tres funcionalidades principales para este propósito: la normalización, la estandarización y la discretización.
+
+Por un lado, la normalización es el proceso de transformar la escala de una variable al rango [0,1]. Esto suele ser interesante cuando los rangos de las variables son muy dispares, ya que de esta forma podemos convertir todos los atributos a un rango común. En este paquete, la normalización se puede realizar mediante la función *normalize1* en el caso de un solo atributo, y mediante la función *normalize_att* en el caso del conjunto de datos completo.
+
+```{r}
+print("Weight before normalizing:"); print_data(get_attribute(MyDataset, "Weight"))
+MyDataset <- normalize1(MyDataset,"Weight")
+print("Weight after normalizing:"); print_data(get_attribute(MyDataset, "Weight"))
+```
+
+Otra posible opción para homogeneizar los valores de las variables numéricas en un conjunto de datos es lo que se conoce como estandarización. Este proceso se basa en restar a una variable su media y después dividir el resultado por la desviación típica. De esta forma, los datos resultantes tendrán media 0 y desviación típica 1. La estandarización se puede aplicar utlizando la función *standarize1* en el caso de un solo atributo, y mediante la función *standarize_att* en el caso del conjunto de datos entero.
+
+```{r}
+print("Quantity before normalizing:"); print_data(get_attribute(MyDataset, "Quantity"))
+MyDataset <- standarize1(MyDataset,"Quantity")
+print("Weight after standarizing:"); print_data(get_attribute(MyDataset, "Quantity"))
+```
+
+Por último, el paquete *datapack* también incluye técnicas de discretización. Es decir, ofrece la posibilidad de agrupar los distintos valores de las variables numéricas en intervalos, convertiéndolas así en variables de tipo factor. Las técnicas de discretización disponibles son las siguientes:
+
+- **Discretización *equal width*:** El rango de la variable numérica se divide en una cierta cantidad de intervalos (*num_bins*) de igual tamaño. Se puede aplicar mediante la función *discretize1* con *method=width* en el caso de un solo atributo, y mediante la función *discretize_att* con *method=width* en el caso del conjunto de datos completo.
+
+- **Discretización *equal frequency*:** El rango de la variable numérica se divide en una cierta cantidad de intervalos (*num_bins*) tal que cada intervalo contiene la misma cantidad de observaciones (+/-1). Se puede aplicar mediante la función *discretize1* con *method=frequency* en el caso de un solo atributo, y mediante la función *discretize_att* con *method=frequency* en el caso del conjunto de datos completo. **ADVERTENCIA:** En caso de haber observaciones con valores repetidos, este tipo de discretización podría producir resultados no deseados.
+
+- **Discretización personalizada:** El rango de la variable numérica se divide según los puntos de corte proporcionados (*cut_points*). Está disponible para un solo atributo mediante la función *discretize1* con *method=custom*.
+
+```{r}
+print("Dataset before discretizing:"); print_dataset(MyDataset)
+MyDataset <- discretize1(MyDataset,"Code",method="frequency",num_bins=5)
+MyDataset <- discretize1(MyDataset,"Quantity",method="custom",cut_points=c(-1,0,1))
+MyDataset <- discretize1(MyDataset,"Weight",method="width",num_bins=4)
+print("Dataset after discretizing:"); print_dataset(MyDataset)
+```
+
+## Filtrado del conjunto de datos
+
+Para finalizar, el paquete *datapack* incluye una opción de filtrado de los atributos predictores mediante la función *filter_by*. Es decir, nos permite establecer una métrica (*metric*), un punto de corte (*threshold*) y un operador de comparación (*comparator*) a partir de los cuales realizar un filtrado de las variables. Las métricas disponibles son el área bajo la curva ROC, la varianza, la media y la mediana en el caso de las variables numéricas, y la entropía en el caso de las variables no numéricas. En cuanto a los operadores de comparación, se permiten los operadores *lt* (<), *le* (<=), *gt* (>), *ge* (>=), *eq* (=) y *neq* (!=).
+
+Como ejemplo, a continuación filtramos los atributos no numéricos para quedarnos solo con aquellos que tengan una entropía mayor que 2. Cabe destacar que la variable clase (en este caso, *Expensive*) no es tenida en cuenta durante el filtrado.
+
+```{r}
+print("Entropy of the non-numerical attributes:"); print(entropy_att(MyDataset))
+MyDataset <- filter_by(MyDataset,metric="entropy",threshold=2,comparator="gt")
+print("Dataset after applying the filter:"); print_dataset(MyDataset)
+```

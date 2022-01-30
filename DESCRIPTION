@@ -1,0 +1,23 @@
+Package: datapack
+Type: Package
+Title: Paquete para trabajar con conjuntos de datos
+Version: 0.0.1
+Author: Xabier Benavides [aut]
+Maintainer: Xabier Benavides <xabier.benavides@ehu.eus>
+Suggests:
+    ggplot2,
+    reshape2,
+    rmarkdown,
+    knitr
+Description: Este paquete incluye clases y funciones que pueden utilizarse para trabajar con conjuntos de datos.
+Collate:
+    attributes.R
+    dataset.R
+    plots.R
+License: MIT
+Encoding: UTF-8
+BuildVignettes: TRUE
+VignetteBuilder:
+    knitr,
+    rmarkdown
+RoxygenNote: 7.1.2
