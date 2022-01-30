@@ -16,6 +16,6 @@ Los gráficos disponibles en el paquete **datapack** hacen uso de las librerías
 
 # INSTALACIÓN
 
-Si se dispone del paquete **devtools**, el paquete **datapack** puede ser instalado fácilmente mediante el siguiente comando:
+Si se dispone del paquete **devtools**, el paquete **datapack** puede ser instalado fácilmente mediante el siguiente comando en R:
 
 `devtools::install_github("XB-Repositories/R-datapack")`
